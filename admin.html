@@ -17,63 +17,84 @@
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Add Item Form -->
-            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
-                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Add Menu Item</h2>
-                <form id="addItemForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Category</label>
-                        <select id="category" required class="w-full bg-gray-600 border-gray-500 rounded-md px-3 py-2 focus:ring-emerald-500">
-                            <option value="Food">Entrees</option>
-                            <option value="Meat">Accompaniments</option>
-                            <option value="Juice">Sauces</option>
-                            <option value="Wine">Salads</option>
-                            <option value="Beverages">Beverages</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium mb-1">Item Name</label>
-                        <input type="text" id="itemName" required class="w-full bg-gray-600 border-gray-500 rounded-md px-3 py-2 focus:ring-emerald-500">
-                    </div>
-                    <button type="submit" class="w-full bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600 transition">Add to Menu</button>
-                </form>
-            </div>
+            
+            <!-- LEFT COLUMN: Menu Management -->
+            <div class="space-y-8">
+                <!-- Add Item Form -->
+                <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-emerald-400">Add Menu Item</h2>
+                    <form id="addItemForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Category (Type new or select existing)</label>
+                            <!-- Changed to text input with datalist for dynamic categories -->
+                            <input type="text" id="category" list="categoryList" required 
+                                   class="w-full bg-gray-600 border border-gray-500 rounded-md px-3 py-2 focus:ring-emerald-500 focus:border-emerald-500" 
+                                   placeholder="e.g., Food, Meat, Accompaniments">
+                            <datalist id="categoryList"></datalist>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Item Name</label>
+                            <input type="text" id="itemName" required class="w-full bg-gray-600 border border-gray-500 rounded-md px-3 py-2 focus:ring-emerald-500">
+                        </div>
+                        <button type="submit" class="w-full bg-emerald-500 text-white py-2 px-4 rounded-md hover:bg-emerald-600 transition">Add to Menu</button>
+                    </form>
+                </div>
 
-            <!-- Who Voted Table -->
-            <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
-                <h2 class="text-xl font-semibold mb-4 text-emerald-400">Who Chose What</h2>
-                <div class="overflow-y-auto max-h-96">
-                    <table class="w-full text-left text-sm">
-                        <thead class="bg-gray-600 sticky top-0">
-                            <tr>
-                                <th class="p-2">Guest</th>
-                                <th class="p-2">Category</th>
-                                <th class="p-2">Choice</th>
-                            </tr>
-                        </thead>
-                        <tbody id="votesTableBody">
-                            <tr><td colspan="3" class="p-4 text-center text-gray-400">Waiting for votes...</td></tr>
-                        </tbody>
-                    </table>
+                <!-- NEW: Current Menu Display -->
+                <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-emerald-400">Current Menu</h2>
+                    <div class="overflow-y-auto max-h-96">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-600 sticky top-0">
+                                <tr>
+                                    <th class="p-2">Category</th>
+                                    <th class="p-2">Item Name</th>
+                                    <th class="p-2 text-right">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="menuTableBody">
+                                <tr><td colspan="3" class="p-4 text-center text-gray-400">No items yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
+
+            <!-- RIGHT COLUMN: Votes -->
+            <div>
+                <div class="bg-gray-700 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-emerald-400">Who Chose What</h2>
+                    <div class="overflow-y-auto max-h-[500px]">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-gray-600 sticky top-0">
+                                <tr>
+                                    <th class="p-2">Guest</th>
+                                    <th class="p-2">Category</th>
+                                    <th class="p-2">Choice</th>
+                                </tr>
+                            </thead>
+                            <tbody id="votesTableBody">
+                                <tr><td colspan="3" class="p-4 text-center text-gray-400">Waiting for votes...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
     <script>
         // --- FIREBASE CONFIGURATION ---
-        // PASTE YOUR ACTUAL FIREBASE CONFIG HERE (Same as index.html)
-          const firebaseConfig = {
-    apiKey: "AIzaSyAI6Mpu88nT258zMcZ5l4abAWCizcaamr8",
-    authDomain: "menu-app-91eb7.firebaseapp.com",
-    projectId: "menu-app-91eb7",
-    storageBucket: "menu-app-91eb7.firebasestorage.app",
-    messagingSenderId: "710690718340",
-    appId: "1:710690718340:web:6a235d01ce130f5398f8d1",
-    measurementId: "G-8E3PEBVL6N"
-  };
-
-        
+        // PASTE YOUR ACTUAL FIREBASE CONFIG HERE
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_PROJECT.firebaseapp.com",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_PROJECT.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef"
+        };
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -88,17 +109,51 @@
                 category: category,
                 name: name
             }).then(() => {
-                alert("Item added!");
                 e.target.reset();
             });
         });
 
-        // 2. Listen for Votes in Real-Time
+        // 2. Listen for Menu Items (Updates Menu Table & Category Datalist)
+        db.collection("menu_items").onSnapshot((snapshot) => {
+            // Update the category datalist so admin can see existing categories
+            const categories = [...new Set(snapshot.docs.map(doc => doc.data().category))];
+            const datalist = document.getElementById('categoryList');
+            datalist.innerHTML = categories.map(cat => `<option value="${cat}">`).join('');
+
+            // Update the Current Menu table
+            const tbody = document.getElementById('menuTableBody');
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="3" class="p-4 text-center text-gray-400">No items yet.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            snapshot.docs.forEach(doc => {
+                const data = doc.data();
+                html += `
+                    <tr class="border-b border-gray-600 hover:bg-gray-600">
+                        <td class="p-2 text-gray-400">${data.category}</td>
+                        <td class="p-2 font-medium">${data.name}</td>
+                        <td class="p-2 text-right">
+                            <button onclick="deleteItem('${doc.id}')" class="text-red-400 hover:text-red-300 font-semibold">Delete</button>
+                        </td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html;
+        });
+
+        // 3. Delete Item Function
+        window.deleteItem = function(itemId) {
+            if (confirm("Are you sure you want to delete this item from the menu?")) {
+                db.collection("menu_items").doc(itemId).delete();
+            }
+        }
+
+        // 4. Listen for Votes in Real-Time
         db.collection("votes").onSnapshot((snapshot) => {
             const tbody = document.getElementById('votesTableBody');
             let html = '';
             
-            // Show newest votes first
             const docs = snapshot.docs.reverse(); 
             
             if (docs.length === 0) {
