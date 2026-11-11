@@ -103,7 +103,7 @@
                     catItems.forEach(item => {
                         html += `
                             <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                <input type="radio" name="item" value="${item.id}" required class="text-indigo-600 focus:ring-indigo-500">
+                                <input type="checkbox" name="item" value="${item.id}" required class="text-indigo-600 focus:ring-indigo-500">
                                 <span>${item.name}</span>
                             </label>`;
                     });
