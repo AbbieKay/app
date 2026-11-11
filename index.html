@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Menu - Viewer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold text-indigo-700">Event Menu</h1>
+            <a href="admin.html" class="text-sm text-gray-500 hover:text-indigo-600">Admin Login</a>
+        </header>
+
+        <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+            <h2 class="text-xl font-semibold mb-4">Make Your Choice</h2>
+            <form id="voteForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                    <input type="text" id="userName" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                
+                <div id="menuContainer" class="space-y-6">
+                    <!-- Menu items will be injected here by JS -->
+                    <p class="text-gray-500">Loading menu...</p>
+                </div>
+
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">Submit Vote</button>
+            </form>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Current Standings</h2>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="border-b-2 border-gray-200">
+                        <th class="py-2">Category</th>
+                        <th class="py-2">Item</th>
+                        <th class="py-2 text-right">Votes</th>
+                    </tr>
+                </thead>
+                <tbody id="standingsBody">
+                    <!-- Standings injected here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // --- FIREBASE CONFIGURATION ---
+        // PASTE YOUR ACTUAL FIREBASE CONFIG HERE
+         const firebaseConfig = {
+    apiKey: "AIzaSyAI6Mpu88nT258zMcZ5l4abAWCizcaamr8",
+    authDomain: "menu-app-91eb7.firebaseapp.com",
+    projectId: "menu-app-91eb7",
+    storageBucket: "menu-app-91eb7.firebasestorage.app",
+    messagingSenderId: "710690718340",
+    appId: "1:710690718340:web:6a235d01ce130f5398f8d1",
+    measurementId: "G-8E3PEBVL6N"
+  };
+
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        let currentItems = [];
+        let currentVotes = [];
+
+        // 1. Listen for Menu Items in Real-Time
+        db.collection("menu_items").onSnapshot((snapshot) => {
+            currentItems = [];
+            snapshot.forEach(doc => currentItems.push({ id: doc.id, ...doc.data() }));
+            renderMenu();
+            renderStandings();
+        });
+
+        // 2. Listen for Votes in Real-Time
+        db.collection("votes").onSnapshot((snapshot) => {
+            currentVotes = [];
+            snapshot.forEach(doc => currentVotes.push(doc.data()));
+            renderStandings();
+        });
+
+        // 3. Render the Menu grouped by category
+        function renderMenu() {
+            const container = document.getElementById('menuContainer');
+            if (currentItems.length === 0) {
+                container.innerHTML = '<p class="text-gray-500">No items on the menu yet. Ask the admin to add some!</p>';
+                return;
+            }
+
+            const categories = ['Food', 'Meat', 'Juice', 'Wine'];
+            let html = '';
+            
+            categories.forEach(cat => {
+                const catItems = currentItems.filter(i => i.category === cat);
+                if (catItems.length > 0) {
+                    html += `<div><h3 class="font-bold text-lg text-indigo-600 mb-2">${cat}s</h3><div class="space-y-2">`;
+                    catItems.forEach(item => {
+                        html += `
+                            <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
+                                <input type="radio" name="item" value="${item.id}" required class="text-indigo-600 focus:ring-indigo-500">
+                                <span>${item.name}</span>
+                            </label>`;
+                    });
+                    html += `</div></div>`;
+                }
+            });
+            container.innerHTML = html;
+        }
+
+        // 4. Render the Standings Table
+        function renderStandings() {
+            const tbody = document.getElementById('standingsBody');
+            let html = '';
+            
+            currentItems.forEach(item => {
+                const voteCount = currentVotes.filter(v => v.itemId === item.id).length;
+                html += `
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-2 text-gray-500">${item.category}</td>
+                        <td class="py-2 font-medium">${item.name}</td>
+                        <td class="py-2 text-right font-bold text-indigo-600">${voteCount}</td>
+                    </tr>`;
+            });
+            tbody.innerHTML = html || '<tr><td colspan="3" class="py-4 text-center text-gray-500">No data yet.</td></tr>';
+        }
+
+        // 5. Handle Vote Submission
+        document.getElementById('voteForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const userName = document.getElementById('userName').value;
+            const selectedItem = document.querySelector('input[name="item"]:checked');
+            
+            if (!selectedItem) return alert("Please select an item!");
+
+            const itemData = currentItems.find(i => i.id === selectedItem.value);
+
+            db.collection("votes").add({
+                userName: userName,
+                itemId: itemData.id,
+                itemName: itemData.name,
+                category: itemData.category,
+                timestamp: new Date()
+            }).then(() => {
+                alert("Vote submitted successfully!");
+                e.target.reset();
+            });
+        });
+    </script>
+</body>
+</html>
