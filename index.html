@@ -17,18 +17,23 @@
         </header>
 
         <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-            <h2 class="text-xl font-semibold mb-4">Make Your Choice</h2>
+            <h2 class="text-xl font-semibold mb-2">Make Your Choices</h2>
+            <p class="text-sm text-gray-500 mb-4">Select one item from each category you would like.</p>
+            
             <form id="voteForm" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
                     <input type="text" id="userName" required class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
                 </div>
                 
+                <!-- Menu categories will be injected here -->
                 <div id="menuContainer" class="space-y-6">
                     <p class="text-gray-500">Loading menu...</p>
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">Submit Vote</button>
+                <button type="submit" id="submitBtn" class="w-full bg-indigo-600 text-white py-3 px-4 rounded-md hover:bg-indigo-700 transition font-semibold text-lg mt-6">
+                    Submit All Choices
+                </button>
             </form>
         </div>
 
@@ -51,7 +56,7 @@
     <script>
         // --- FIREBASE CONFIGURATION ---
         // PASTE YOUR ACTUAL FIREBASE CONFIG HERE
-        const firebaseConfig = {
+          const firebaseConfig = {
     apiKey: "AIzaSyAI6Mpu88nT258zMcZ5l4abAWCizcaamr8",
     authDomain: "menu-app-91eb7.firebaseapp.com",
     projectId: "menu-app-91eb7",
@@ -91,20 +96,27 @@
                 return;
             }
 
-            // Dynamically extract unique categories from the database and sort them alphabetically
+            // Get unique categories and sort them alphabetically
             const categories = [...new Set(currentItems.map(item => item.category))].sort();
-            
             let html = '';
             
             categories.forEach(cat => {
                 const catItems = currentItems.filter(i => i.category === cat);
                 if (catItems.length > 0) {
-                    html += `<div><h3 class="font-bold text-lg text-indigo-600 mb-2">${cat}</h3><div class="space-y-2">`;
+                    // Sanitize category name so it works safely in HTML input 'name' attributes
+                    const safeCatName = cat.replace(/[^a-zA-Z0-9]/g, '_');
+                    
+                    html += `
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <h3 class="font-bold text-lg text-indigo-600 mb-3 border-b pb-2">${cat}</h3>
+                            <div class="space-y-2">
+                    `;
                     catItems.forEach(item => {
+                        // Notice the name attribute is now unique per category: name="choice_CategoryName"
                         html += `
-                            <label class="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                <input type="checkbox" name="item" value="${item.id}" required class="text-indigo-600 focus:ring-indigo-500">
-                                <span>${item.name}</span>
+                            <label class="flex items-center space-x-3 p-2 hover:bg-white rounded cursor-pointer transition">
+                                <input type="radio" name="choice_${safeCatName}" value="${item.id}" class="text-indigo-600 focus:ring-indigo-500 h-4 w-4">
+                                <span class="text-gray-700">${item.name}</span>
                             </label>`;
                     });
                     html += `</div></div>`;
@@ -130,26 +142,54 @@
             tbody.innerHTML = html || '<tr><td colspan="3" class="py-4 text-center text-gray-500">No data yet.</td></tr>';
         }
 
-        // 5. Handle Vote Submission
-        document.getElementById('voteForm').addEventListener('submit', (e) => {
+        // 5. Handle Multiple Choice Submission
+        document.getElementById('voteForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userName = document.getElementById('userName').value;
-            const selectedItem = document.querySelector('input[name="item"]:checked');
+            const userName = document.getElementById('userName').value.trim();
             
-            if (!selectedItem) return alert("Please select an item!");
+            if (!userName) return alert("Please enter your name!");
 
-            const itemData = currentItems.find(i => i.id === selectedItem.value);
+            // Find ALL checked radio buttons across all categories
+            const checkedInputs = document.querySelectorAll('input[type="radio"]:checked');
+            
+            if (checkedInputs.length === 0) {
+                return alert("Please select at least one item from the menu!");
+            }
 
-            db.collection("votes").add({
-                userName: userName,
-                itemId: itemData.id,
-                itemName: itemData.name,
-                category: itemData.category,
-                timestamp: new Date()
-            }).then(() => {
-                alert("Vote submitted successfully!");
-                e.target.reset();
-            });
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = "Submitting...";
+
+            try {
+                // Create an array of promises for Firebase writes
+                const promises = [];
+                
+                checkedInputs.forEach(input => {
+                    const itemData = currentItems.find(i => i.id === input.value);
+                    if (itemData) {
+                        promises.push(db.collection("votes").add({
+                            userName: userName,
+                            itemId: itemData.id,
+                            itemName: itemData.name,
+                            category: itemData.category,
+                            timestamp: new Date()
+                        }));
+                    }
+                });
+
+                // Wait for all selected items to be saved to Firebase simultaneously
+                await Promise.all(promises);
+                
+                alert("Your choices have been submitted successfully!");
+                e.target.reset(); // Clears the form and unchecks all radio buttons
+            } catch (error) {
+                console.error("Error submitting votes: ", error);
+                alert("There was an error submitting your choices. Please try again.");
+            } finally {
+                // Re-enable the button no matter what happens
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Submit All Choices";
+            }
         });
     </script>
 </body>
